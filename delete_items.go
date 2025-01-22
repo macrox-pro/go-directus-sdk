@@ -11,7 +11,7 @@ import (
 )
 
 type DeleteItemsQuery struct {
-	Filter any `url:"filter,omitempty"`
+	Filter helpers.URLParamJSON `url:"filter,omitempty"`
 }
 
 type DeleteItemsRequest[ID comparable] struct {
@@ -32,8 +32,8 @@ func (r *DeleteItemsRequest[ID]) SetIDs(ids ...ID) *DeleteItemsRequest[ID] {
 	return r
 }
 
-func (r *DeleteItemsRequest[ID]) SetFilter(filter any) *DeleteItemsRequest[ID] {
-	r.Filter = filter
+func (r *DeleteItemsRequest[ID]) SetFilter(rule FilterRule) *DeleteItemsRequest[ID] {
+	r.Filter = helpers.URLParamJSON{Data: rule}
 	return r
 }
 
@@ -57,7 +57,7 @@ func (r *DeleteItemsRequest[ID]) SendBy(client *Client) error {
 		return fmt.Errorf("empty collection name")
 	}
 
-	if len(r.IDs) == 0 && r.Filter == nil {
+	if len(r.IDs) == 0 && r.Filter.IsEmpty() {
 		return fmt.Errorf("empty delete conditions (id or filter)")
 	}
 
@@ -69,7 +69,7 @@ func (r *DeleteItemsRequest[ID]) SendBy(client *Client) error {
 		req.SetAuthToken(r.Token)
 	}
 
-	if r.Filter != nil {
+	if !r.Filter.IsEmpty() {
 		req.QueryParam, _ = query.Values(r.DeleteItemsQuery)
 	}
 

@@ -57,8 +57,8 @@ func (r *ReadItemsRequest[T]) SetAlias(v map[string]string) *ReadItemsRequest[T]
 	return r
 }
 
-func (r *ReadItemsRequest[T]) SetFilter(v any) *ReadItemsRequest[T] {
-	r.Filter = helpers.URLParamJSON{Data: v}
+func (r *ReadItemsRequest[T]) SetFilter(rule FilterRule) *ReadItemsRequest[T] {
+	r.Filter = helpers.URLParamJSON{Data: rule}
 	return r
 }
 

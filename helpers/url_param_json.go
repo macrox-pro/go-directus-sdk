@@ -26,3 +26,7 @@ func (p URLParamJSON) EncodeValues(key string, v *url.Values) error {
 func (p URLParamJSON) MarshalJSON() ([]byte, error) {
 	return json.Marshal(p.Data)
 }
+
+func (p URLParamJSON) IsEmpty() bool {
+	return p.Data == nil
+}

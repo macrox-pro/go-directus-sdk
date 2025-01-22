@@ -10,40 +10,8 @@ import (
 	"github.com/macrox-pro/go-directus-sdk/helpers"
 )
 
-type Count struct {
-	Fields []string `url:"count,omitempty"`
-}
-
-type CountDistinct struct {
-	Fields []string `url:"countDistinct,omitempty"`
-}
-
-type Sum struct {
-	Fields []string `url:"sum,omitempty"`
-}
-
-type SumDistinct struct {
-	Fields []string `url:"sumDistinct,omitempty"`
-}
-
-type Avg struct {
-	Fields []string `url:"avg,omitempty"`
-}
-
-type AvgDistinct struct {
-	Fields []string `url:"avgDistinct,omitempty"`
-}
-
-type Min struct {
-	Field string `url:"min,omitempty"`
-}
-
-type Max struct {
-	Field string `url:"max,omitempty"`
-}
-
 type AggregateQuery struct {
-	Aggregate any                  `url:"aggregate,omitempty"`
+	Aggregate AggregateRule        `url:"aggregate,omitempty"`
 	GroupBy   []string             `url:"groupBy,omitempty"`
 	Filter    helpers.URLParamJSON `url:"filter,omitempty"`
 	Sort      []string             `url:"sort,omitempty"`
@@ -64,8 +32,8 @@ type AggregateRequest[T any] struct {
 	ctx context.Context
 }
 
-func (r *AggregateRequest[T]) SetAggregate(aggregate any) *AggregateRequest[T] {
-	r.Aggregate = aggregate
+func (r *AggregateRequest[T]) SetAggregate(rule AggregateRule) *AggregateRequest[T] {
+	r.Aggregate = rule
 	return r
 }
 
@@ -74,8 +42,8 @@ func (r *AggregateRequest[T]) SetGroupBy(groupBy []string) *AggregateRequest[T] 
 	return r
 }
 
-func (r *AggregateRequest[T]) SetFilter(v any) *AggregateRequest[T] {
-	r.Filter = helpers.URLParamJSON{Data: v}
+func (r *AggregateRequest[T]) SetFilter(rule FilterRule) *AggregateRequest[T] {
+	r.Filter = helpers.URLParamJSON{Data: rule}
 	return r
 }
 

@@ -11,8 +11,8 @@ type FilterRule interface {
 }
 
 type ByField struct {
-	Name   string `json:"-"`
-	Filter any    `json:"-"`
+	Name   string     `json:"-"`
+	Filter FilterRule `json:"-"`
 }
 
 func (ByField) directusFilterRule() {}
@@ -43,13 +43,13 @@ func (f ByField) MarshalJSON() ([]byte, error) {
 }
 
 type OR struct {
-	Filters []any `json:"_or"`
+	Filters []FilterRule `json:"_or"`
 }
 
 func (OR) directusFilterRule() {}
 
 type AND struct {
-	Filters []any `json:"_and"`
+	Filters []FilterRule `json:"_and"`
 }
 
 func (AND) directusFilterRule() {}
@@ -65,6 +65,30 @@ type NotEqual[T any] struct {
 }
 
 func (NotEqual[T]) directusFilterRule() {}
+
+type LessThan[T any] struct {
+	Value T `json:"_lt"`
+}
+
+func (LessThan[T]) directusFilterRule() {}
+
+type LessThanOrEquel[T any] struct {
+	Value T `json:"_lte"`
+}
+
+func (LessThanOrEquel[T]) directusFilterRule() {}
+
+type GreaterThan[T any] struct {
+	Value T `json:"_gt"`
+}
+
+func (GreaterThan[T]) directusFilterRule() {}
+
+type GreaterThanOrEquel[T any] struct {
+	Value T `json:"_gte"`
+}
+
+func (GreaterThanOrEquel[T]) directusFilterRule() {}
 
 type IsOneOf[T any] struct {
 	Values []T `json:"_in"`
@@ -95,3 +119,15 @@ type Contains struct {
 }
 
 func (Contains) directusFilterRule() {}
+
+type IsEmpty struct {
+	Value bool `json:"_empty"`
+}
+
+func (IsEmpty) directusFilterRule() {}
+
+type IsNotEmpty struct {
+	Value bool `json:"_nempty"`
+}
+
+func (IsNotEmpty) directusFilterRule() {}

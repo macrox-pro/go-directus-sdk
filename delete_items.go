@@ -5,17 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/google/go-querystring/query"
-
 	"github.com/macrox-pro/go-directus-sdk/helpers"
 )
 
 type DeleteItemsQuery struct {
-	Filter helpers.URLParamJSON `url:"filter,omitempty"`
+	Filter FilterRule `json:"filter"`
+}
+
+type DeleteItemsRequestPayload struct {
+	Query DeleteItemsQuery `json:"query"`
 }
 
 type DeleteItemsRequest[ID comparable] struct {
-	DeleteItemsQuery
+	DeleteItemsRequestPayload
 
 	Collection string
 	IsSystem   bool
@@ -33,7 +35,7 @@ func (r *DeleteItemsRequest[ID]) SetIDs(ids ...ID) *DeleteItemsRequest[ID] {
 }
 
 func (r *DeleteItemsRequest[ID]) SetFilter(rule FilterRule) *DeleteItemsRequest[ID] {
-	r.Filter = helpers.URLParamJSON{Data: rule}
+	r.Query.Filter = rule
 	return r
 }
 
@@ -57,24 +59,23 @@ func (r *DeleteItemsRequest[ID]) SendBy(client *Client) error {
 		return fmt.Errorf("empty collection name")
 	}
 
-	if len(r.IDs) == 0 && r.Filter.IsEmpty() {
+	if len(r.IDs) == 0 && r.Query.Filter == nil {
 		return fmt.Errorf("empty delete conditions (id or filter)")
 	}
 
 	req := client.createRequestWithContext(r.ctx).
 		SetDoNotParseResponse(true).
-		SetHeader(headerAccept, contentTypeJSON)
+		SetHeader(headerAccept, contentTypeJSON).
+		SetHeader(headerContentType, contentTypeJSON)
 
 	if r.Token != "" {
 		req.SetAuthToken(r.Token)
 	}
 
-	if !r.Filter.IsEmpty() {
-		req.QueryParam, _ = query.Values(r.DeleteItemsQuery)
-	}
-
 	if len(r.IDs) > 0 {
 		req.Body = &r.IDs
+	} else if r.Query.Filter != nil {
+		req.Body = r.DeleteItemsRequestPayload
 	}
 
 	resp, err := req.Delete(

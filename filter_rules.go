@@ -54,6 +54,14 @@ type AND struct {
 
 func (AND) directusFilterRule() {}
 
+type Some struct {
+	Filter FilterRule `json:"_some"`
+}
+
+type None struct {
+	Filter FilterRule `json:"_none"`
+}
+
 type Equal[T any] struct {
 	Value T `json:"_eq"`
 }

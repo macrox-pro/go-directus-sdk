@@ -58,9 +58,13 @@ type Some struct {
 	Filter FilterRule `json:"_some"`
 }
 
+func (Some) directusFilterRule() {}
+
 type None struct {
 	Filter FilterRule `json:"_none"`
 }
+
+func (None) directusFilterRule() {}
 
 type Equal[T any] struct {
 	Value T `json:"_eq"`

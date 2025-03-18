@@ -164,3 +164,23 @@ func (agg Max) EncodeValues(key string, v *url.Values) error {
 
 	return nil
 }
+
+type Many struct {
+	Rules []AggregateRule
+}
+
+func (Many) directusAggregateRule() {}
+
+func (agg Many) EncodeValues(key string, v *url.Values) error {
+	if len(agg.Rules) == 0 {
+		return nil
+	}
+
+	for _, rule := range agg.Rules {
+		if err := rule.EncodeValues(key, v); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

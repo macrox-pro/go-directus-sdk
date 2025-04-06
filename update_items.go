@@ -11,44 +11,57 @@ import (
 	"github.com/macrox-pro/go-directus-sdk/helpers"
 )
 
-type UpdateItemRequest[T any] struct {
-	ReadItemQuery
+type UpdateItemsRequetBody struct {
+	Data any      `json:"data"`
+	Keys []string `json:"keys,omitempty"`
+}
 
-	Collection, ID string
-	IsSystem       bool
-	Changes        any
+type UpdateItemsRequest[T any] struct {
+	ReadItemsQuery
+
+	Collection string
+	Keys       []string
+
+	IsSystem bool
+
+	Changes any
 
 	Token string
 
 	ctx context.Context
 }
 
-func (r *UpdateItemRequest[T]) SetChanges(changes any) *UpdateItemRequest[T] {
+func (r *UpdateItemsRequest[T]) SetChanges(changes any) *UpdateItemsRequest[T] {
 	r.Changes = changes
 	return r
 }
 
-func (r *UpdateItemRequest[T]) SetDeep(v map[string]DeepQuery) *UpdateItemRequest[T] {
+func (r *UpdateItemsRequest[T]) SetDeep(v map[string]DeepQuery) *UpdateItemsRequest[T] {
 	r.Deep = helpers.URLParamJSON{Data: v}
 	return r
 }
 
-func (r *UpdateItemRequest[T]) SetToken(token string) *UpdateItemRequest[T] {
+func (r *UpdateItemsRequest[T]) SetFilter(rule FilterRule) *UpdateItemsRequest[T] {
+	r.Filter = helpers.URLParamJSON{Data: rule}
+	return r
+}
+
+func (r *UpdateItemsRequest[T]) SetToken(token string) *UpdateItemsRequest[T] {
 	r.Token = token
 	return r
 }
 
-func (r *UpdateItemRequest[T]) SetContext(ctx context.Context) *UpdateItemRequest[T] {
+func (r *UpdateItemsRequest[T]) SetContext(ctx context.Context) *UpdateItemsRequest[T] {
 	r.ctx = ctx
 	return r
 }
 
-func (r *UpdateItemRequest[T]) SetIsSystem(v bool) *UpdateItemRequest[T] {
+func (r *UpdateItemsRequest[T]) SetIsSystem(v bool) *UpdateItemsRequest[T] {
 	r.IsSystem = v
 	return r
 }
 
-func (r *UpdateItemRequest[T]) SendBy(client *Client) (T, error) {
+func (r *UpdateItemsRequest[T]) SendBy(client *Client) (T, error) {
 	var payload ReadItemPayload[T]
 
 	if r.Collection == "" {
@@ -63,13 +76,16 @@ func (r *UpdateItemRequest[T]) SendBy(client *Client) (T, error) {
 		SetDoNotParseResponse(true).
 		SetHeader(headerContentType, contentTypeJSON).
 		SetHeader(headerAccept, contentTypeJSON).
-		SetBody(r.Changes)
+		SetBody(&UpdateItemsRequetBody{
+			Data: r.Changes,
+			Keys: r.Keys,
+		})
 
 	if r.Token != "" {
 		req.SetAuthToken(r.Token)
 	}
 
-	req.QueryParam, _ = query.Values(r.ReadItemQuery)
+	req.QueryParam, _ = query.Values(r.ReadItemsQuery)
 	if req.QueryParam == nil {
 		req.QueryParam = url.Values{}
 	}
@@ -80,7 +96,6 @@ func (r *UpdateItemRequest[T]) SendBy(client *Client) (T, error) {
 			helpers.PartURL{}, // for prefix - /
 			helpers.PartURL{Value: "items", Skip: r.IsSystem},
 			helpers.PartURL{Value: r.Collection},
-			helpers.PartURL{Value: r.ID},
 		),
 	)
 	if err != nil {
@@ -103,10 +118,10 @@ func (r *UpdateItemRequest[T]) SendBy(client *Client) (T, error) {
 	return payload.Data, nil
 }
 
-func NewUpdateItem[T any](collection, id string, changes any) *UpdateItemRequest[T] {
-	return &UpdateItemRequest[T]{
+func NewUpdateItems[T any](collection string, keys []string, changes any) *UpdateItemsRequest[T] {
+	return &UpdateItemsRequest[T]{
 		Collection: collection,
 		Changes:    changes,
-		ID:         id,
+		Keys:       keys,
 	}
 }

@@ -12,7 +12,7 @@ import (
 )
 
 type ReadItemQuery struct {
-	Deep map[string]DeepQuery `url:"deep,omitempty"`
+	Deep helpers.URLParamJSON `url:"deep,omitempty"`
 }
 
 type ReadItemPayload[T any] struct {
@@ -31,8 +31,8 @@ type ReadItemRequest[T any] struct {
 	ctx context.Context
 }
 
-func (r *ReadItemRequest[T]) SetDeep(deep map[string]DeepQuery) *ReadItemRequest[T] {
-	r.Deep = deep
+func (r *ReadItemRequest[T]) SetDeep(v map[string]DeepQuery) *ReadItemRequest[T] {
+	r.Deep = helpers.URLParamJSON{Data: v}
 	return r
 }
 

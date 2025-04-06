@@ -28,8 +28,8 @@ func (r *CreateItemRequest[T]) SetData(data any) *CreateItemRequest[T] {
 	return r
 }
 
-func (r *CreateItemRequest[T]) SetDeep(deep map[string]DeepQuery) *CreateItemRequest[T] {
-	r.Deep = deep
+func (r *CreateItemRequest[T]) SetDeep(v map[string]DeepQuery) *CreateItemRequest[T] {
+	r.Deep = helpers.URLParamJSON{Data: v}
 	return r
 }
 

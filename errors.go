@@ -2,25 +2,25 @@ package directus
 
 import "strings"
 
-type Error struct {
+type ErrorDetailsPart struct {
 	Message string `json:"message"`
 }
 
-func (e Error) Error() string {
+func (e ErrorDetailsPart) Error() string {
 	return e.Message
 }
 
-type Errors []Error
+type ErrorDetails []ErrorDetailsPart
 
-func (errs Errors) Error() string {
+func (e ErrorDetails) Error() string {
 	switch {
-	case len(errs) == 0:
+	case len(e) == 0:
 		return ""
-	case len(errs) == 1:
-		return errs[0].Error()
+	case len(e) == 1:
+		return e[0].Error()
 	default:
 		builder := strings.Builder{}
-		for _, err := range errs {
+		for _, err := range e {
 			if builder.Len() > 0 {
 				builder.WriteString("; ")
 			}
@@ -30,6 +30,15 @@ func (errs Errors) Error() string {
 	}
 }
 
-type ErrorsResponse struct {
-	Errors Errors `json:"errors"`
+type Error struct {
+	Status  int
+	Details error
+}
+
+func (e Error) Error() string {
+	return e.Details.Error()
+}
+
+type ErrorResponse struct {
+	Errors ErrorDetails `json:"errors"`
 }

@@ -35,6 +35,8 @@ type AuthLoginOptions struct {
 }
 
 func (c *Client) AuthLogin(ctx context.Context, options AuthLoginOptions) (AuthResult, error) {
+	var payload AuthResponsePayload
+
 	resp, err := c.resty.R().
 		SetContext(ctx).
 		SetHeader("Context-Type", "application/json").
@@ -47,20 +49,19 @@ func (c *Client) AuthLogin(ctx context.Context, options AuthLoginOptions) (AuthR
 		)
 
 	if err != nil {
-		return AuthResult{}, err
+		return payload.Data, err
 	}
 
-	var payload AuthResponsePayload
-
 	if resp.IsError() {
-		var failed ErrorsResponse
-
-		err := json.Unmarshal(resp.Body(), &failed)
-		if err != nil {
+		var failed ErrorResponse
+		if err := json.Unmarshal(resp.Body(), &failed); err != nil {
 			return payload.Data, err
 		}
 
-		return payload.Data, failed.Errors
+		return payload.Data, Error{
+			Status:  resp.StatusCode(),
+			Details: failed.Errors,
+		}
 	}
 
 	err = json.Unmarshal(resp.Body(), &payload)

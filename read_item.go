@@ -16,8 +16,7 @@ type ReadItemQuery struct {
 }
 
 type ReadItemPayload[T any] struct {
-	Data   T      `json:"data"`
-	Errors Errors `json:"errors,omitempty"`
+	Data T `json:"data"`
 }
 
 type ReadItemRequest[T any] struct {
@@ -89,12 +88,20 @@ func (r *ReadItemRequest[T]) SendBy(client *Client) (T, error) {
 		defer body.Close()
 	}
 
-	if err := json.NewDecoder(body).Decode(&payload); err != nil {
-		return payload.Data, err
+	if resp.IsError() {
+		var failed ErrorResponse
+		if err := json.NewDecoder(body).Decode(&failed); err != nil {
+			return payload.Data, err
+		}
+
+		return payload.Data, Error{
+			Status:  resp.StatusCode(),
+			Details: failed.Errors,
+		}
 	}
 
-	if resp.IsError() && len(payload.Errors) > 0 {
-		return payload.Data, payload.Errors
+	if err := json.NewDecoder(body).Decode(&payload); err != nil {
+		return payload.Data, err
 	}
 
 	return payload.Data, nil

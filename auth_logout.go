@@ -25,10 +25,13 @@ func (c *Client) AuthLogout(ctx context.Context, options AuthLogoutOptions) erro
 		return nil
 	}
 
-	var payload ErrorsResponse
+	var payload ErrorResponse
 	if err := json.Unmarshal(resp.Body(), &payload); err != nil {
 		return err
 	}
 
-	return payload.Errors
+	return Error{
+		Status:  resp.StatusCode(),
+		Details: payload.Errors,
+	}
 }

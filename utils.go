@@ -15,15 +15,27 @@ func (c *Client) RandomString(ctx context.Context, length int) (string, error) {
 		return "", err
 	}
 
+	if resp.IsError() {
+		var failed ErrorResponse
+
+		if err := json.Unmarshal(resp.Body(), &failed); err != nil {
+			return "", Error{
+				Status:  resp.StatusCode(),
+				Details: err,
+			}
+		}
+
+		return "", Error{
+			Status:  resp.StatusCode(),
+			Details: failed.Errors,
+		}
+	}
+
 	var payload ReadItemPayload[string]
 
 	err = json.Unmarshal(resp.Body(), &payload)
 	if err != nil {
 		return "", err
-	}
-
-	if resp.IsError() && len(payload.Errors) > 0 {
-		return payload.Data, payload.Errors
 	}
 
 	return payload.Data, nil

@@ -96,16 +96,19 @@ func (r *DeleteItemsRequest[ID]) SendBy(client *Client) error {
 
 	defer body.Close()
 
-	if !resp.IsError() {
+	if resp.IsSuccess() {
 		return nil
 	}
 
-	var payload DeleteItemPayload
+	var payload ErrorResponse
 	if err := json.NewDecoder(body).Decode(&payload); err != nil {
 		return err
 	}
 
-	return payload.Errors
+	return Error{
+		Status:  resp.StatusCode(),
+		Details: payload.Errors,
+	}
 }
 
 func NewDeleteItems[ID comparable](collection string, ids ...ID) *DeleteItemsRequest[ID] {

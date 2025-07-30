@@ -8,10 +8,6 @@ import (
 	"github.com/macrox-pro/go-directus-sdk/helpers"
 )
 
-type DeleteItemPayload struct {
-	Errors Errors `json:"errors,omitempty"`
-}
-
 type DeleteItemRequest struct {
 	Collection, ID string
 	IsSystem       bool
@@ -68,16 +64,19 @@ func (r *DeleteItemRequest) SendBy(client *Client) error {
 
 	defer body.Close()
 
-	if !resp.IsError() {
+	if resp.IsSuccess() {
 		return nil
 	}
 
-	var payload DeleteItemPayload
+	var payload ErrorResponse
 	if err := json.NewDecoder(body).Decode(&payload); err != nil {
 		return err
 	}
 
-	return payload.Errors
+	return Error{
+		Status:  resp.StatusCode(),
+		Details: payload.Errors,
+	}
 }
 
 func NewDeleteItem(collection, id string) *DeleteItemRequest {

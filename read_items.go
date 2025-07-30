@@ -12,8 +12,7 @@ import (
 )
 
 type ReadItemsPayload[T any] struct {
-	Data   []T    `json:"data"`
-	Errors Errors `json:"errors,omitempty"`
+	Data []T `json:"data"`
 }
 
 type DeepQuery struct {
@@ -139,12 +138,20 @@ func (r *ReadItemsRequest[T]) SendBy(client *Client) ([]T, error) {
 		defer body.Close()
 	}
 
-	if err := json.NewDecoder(body).Decode(&payload); err != nil {
-		return nil, err
+	if resp.IsError() {
+		var failed ErrorResponse
+		if err := json.NewDecoder(body).Decode(&failed); err != nil {
+			return payload.Data, err
+		}
+
+		return payload.Data, Error{
+			Status:  resp.StatusCode(),
+			Details: failed.Errors,
+		}
 	}
 
-	if resp.IsError() && len(payload.Errors) > 0 {
-		return nil, payload.Errors
+	if err := json.NewDecoder(body).Decode(&payload); err != nil {
+		return nil, err
 	}
 
 	return payload.Data, nil

@@ -88,12 +88,14 @@ func (r *AggregateRequest[T]) SetIsSystem(v bool) *AggregateRequest[T] {
 }
 
 func (r *AggregateRequest[T]) SendBy(client *Client) ([]T, error) {
+	var payload ReadItemsPayload[T]
+
 	if r.Collection == "" {
-		return nil, fmt.Errorf("empty collection name")
+		return payload.Data, fmt.Errorf("empty collection name")
 	}
 
 	if len(r.GroupBy) == 0 && r.Aggregate == nil {
-		return nil, fmt.Errorf("invalid request aggregate options")
+		return payload.Data, fmt.Errorf("invalid request aggregate options")
 	}
 
 	req := client.createRequestWithContext(r.ctx).
@@ -103,8 +105,6 @@ func (r *AggregateRequest[T]) SendBy(client *Client) ([]T, error) {
 	if r.Token != "" {
 		req.SetAuthToken(r.Token)
 	}
-
-	var payload ReadItemsPayload[T]
 
 	req.QueryParam, _ = query.Values(r.AggregateQuery)
 
@@ -116,7 +116,7 @@ func (r *AggregateRequest[T]) SendBy(client *Client) ([]T, error) {
 		),
 	)
 	if err != nil {
-		return nil, err
+		return payload.Data, err
 	}
 
 	body := resp.RawBody()
@@ -124,12 +124,20 @@ func (r *AggregateRequest[T]) SendBy(client *Client) ([]T, error) {
 		defer body.Close()
 	}
 
-	if err := json.NewDecoder(body).Decode(&payload); err != nil {
-		return nil, err
+	if resp.IsError() {
+		var failed ErrorResponse
+		if err := json.Unmarshal(resp.Body(), &failed); err != nil {
+			return payload.Data, err
+		}
+
+		return payload.Data, Error{
+			Status:  resp.StatusCode(),
+			Details: failed.Errors,
+		}
 	}
 
-	if resp.IsError() && len(payload.Errors) > 0 {
-		return nil, payload.Errors
+	if err := json.NewDecoder(body).Decode(&payload); err != nil {
+		return payload.Data, err
 	}
 
 	return payload.Data, nil

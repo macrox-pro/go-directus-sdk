@@ -40,6 +40,7 @@ func (c *Client) createRequestWithContext(ctx context.Context) *resty.Request {
 			restyReq.SetAuthToken(token)
 		}
 	}
+
 	return restyReq
 }
 

@@ -81,7 +81,7 @@ func (errs Errors) Status() int {
 	var maxStatus int
 	for _, err := range errs {
 		status := err.Extensions.Code.Status()
-		if maxStatus > status {
+		if status > maxStatus {
 			maxStatus = status
 		}
 	}

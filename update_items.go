@@ -108,15 +108,12 @@ func (r *UpdateItemsRequest[T]) SendBy(client *Client) (T, error) {
 	}
 
 	if resp.IsError() {
-		var failed ErrorResponse
+		var failed ErrorsPayload
 		if err := json.NewDecoder(body).Decode(&failed); err != nil {
 			return payload.Data, err
 		}
 
-		return payload.Data, Error{
-			Status:  resp.StatusCode(),
-			Details: failed.Errors,
-		}
+		return payload.Data, failed.Errors
 	}
 
 	if err := json.NewDecoder(body).Decode(&payload); err != nil {

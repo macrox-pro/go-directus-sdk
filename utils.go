@@ -16,19 +16,12 @@ func (c *Client) RandomString(ctx context.Context, length int) (string, error) {
 	}
 
 	if resp.IsError() {
-		var failed ErrorResponse
-
+		var failed ErrorsPayload
 		if err := json.Unmarshal(resp.Body(), &failed); err != nil {
-			return "", Error{
-				Status:  resp.StatusCode(),
-				Details: err,
-			}
+			return "", err
 		}
 
-		return "", Error{
-			Status:  resp.StatusCode(),
-			Details: failed.Errors,
-		}
+		return "", failed.Errors
 	}
 
 	var payload ReadItemPayload[string]

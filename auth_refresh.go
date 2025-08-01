@@ -24,15 +24,12 @@ func (c *Client) AuthRefresh(ctx context.Context, options AuthRefreshOptions) (A
 	}
 
 	if resp.IsError() {
-		var failed ErrorResponse
+		var failed ErrorsPayload
 		if err := json.Unmarshal(resp.Body(), &failed); err != nil {
 			return payload.Data, err
 		}
 
-		return payload.Data, Error{
-			Status:  resp.StatusCode(),
-			Details: failed.Errors,
-		}
+		return payload.Data, failed.Errors
 	}
 
 	err = json.Unmarshal(resp.Body(), &payload)

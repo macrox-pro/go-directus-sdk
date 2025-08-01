@@ -68,15 +68,12 @@ func (r *DeleteItemRequest) SendBy(client *Client) error {
 		return nil
 	}
 
-	var payload ErrorResponse
+	var payload ErrorsPayload
 	if err := json.NewDecoder(body).Decode(&payload); err != nil {
 		return err
 	}
 
-	return Error{
-		Status:  resp.StatusCode(),
-		Details: payload.Errors,
-	}
+	return payload.Errors
 }
 
 func NewDeleteItem(collection, id string) *DeleteItemRequest {

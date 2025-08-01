@@ -53,15 +53,12 @@ func (c *Client) AuthLogin(ctx context.Context, options AuthLoginOptions) (AuthR
 	}
 
 	if resp.IsError() {
-		var failed ErrorResponse
+		var failed ErrorsPayload
 		if err := json.Unmarshal(resp.Body(), &failed); err != nil {
 			return payload.Data, err
 		}
 
-		return payload.Data, Error{
-			Status:  resp.StatusCode(),
-			Details: failed.Errors,
-		}
+		return payload.Data, failed.Errors
 	}
 
 	err = json.Unmarshal(resp.Body(), &payload)

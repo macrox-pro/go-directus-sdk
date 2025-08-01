@@ -100,15 +100,12 @@ func (r *DeleteItemsRequest[ID]) SendBy(client *Client) error {
 		return nil
 	}
 
-	var payload ErrorResponse
+	var payload ErrorsPayload
 	if err := json.NewDecoder(body).Decode(&payload); err != nil {
 		return err
 	}
 
-	return Error{
-		Status:  resp.StatusCode(),
-		Details: payload.Errors,
-	}
+	return payload.Errors
 }
 
 func NewDeleteItems[ID comparable](collection string, ids ...ID) *DeleteItemsRequest[ID] {

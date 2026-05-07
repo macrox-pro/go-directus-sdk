@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 )
 
-type AuthLogoutOptions struct {
+type AuthLogoutParams struct {
 	RefreshToken string   `json:"refresh_token"`
 	Mode         AuthMode `json:"mode,omitempty"`
 }
 
-func (c *Client) AuthLogout(ctx context.Context, options AuthLogoutOptions) error {
+func (c *Client) AuthLogout(ctx context.Context, options AuthLogoutParams) error {
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Context-Type", "application/json").
+		SetHeader("Content-Type", "application/json").
 		SetBody(options).
 		Post("/auth/logout")
 

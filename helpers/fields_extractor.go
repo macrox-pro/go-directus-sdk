@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"encoding"
 	"encoding/json"
 	"reflect"
 	"strings"
@@ -14,7 +13,7 @@ const (
 
 var (
 	jsonMarshalerType = reflect.TypeOf((*json.Marshaler)(nil)).Elem()
-	textMarshalerType = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
+	// textMarshalerType = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
 )
 
 type FieldsExtractor struct {

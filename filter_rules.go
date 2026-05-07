@@ -66,6 +66,18 @@ type None struct {
 
 func (None) directusFilterRule() {}
 
+type Has struct {
+	Filter FilterRule `json:"_has"`
+}
+
+func (Has) directusFilterRule() {}
+
+type NHas struct {
+	Filter FilterRule `json:"_nhas"`
+}
+
+func (NHas) directusFilterRule() {}
+
 type Equal[T any] struct {
 	Value T `json:"_eq"`
 }
@@ -84,11 +96,11 @@ type LessThan[T any] struct {
 
 func (LessThan[T]) directusFilterRule() {}
 
-type LessThanOrEquel[T any] struct {
+type LessThanOrEqual[T any] struct {
 	Value T `json:"_lte"`
 }
 
-func (LessThanOrEquel[T]) directusFilterRule() {}
+func (LessThanOrEqual[T]) directusFilterRule() {}
 
 type GreaterThan[T any] struct {
 	Value T `json:"_gt"`
@@ -96,11 +108,11 @@ type GreaterThan[T any] struct {
 
 func (GreaterThan[T]) directusFilterRule() {}
 
-type GreaterThanOrEquel[T any] struct {
+type GreaterThanOrEqual[T any] struct {
 	Value T `json:"_gte"`
 }
 
-func (GreaterThanOrEquel[T]) directusFilterRule() {}
+func (GreaterThanOrEqual[T]) directusFilterRule() {}
 
 type IsOneOf[T any] struct {
 	Values []T `json:"_in"`
@@ -113,6 +125,18 @@ type IsNotOneOf[T any] struct {
 }
 
 func (IsNotOneOf[T]) directusFilterRule() {}
+
+type Between[T any] struct {
+	Values [2]T `json:"_between"`
+}
+
+func (Between[T]) directusFilterRule() {}
+
+type NBetween[T any] struct {
+	Values [2]T `json:"_nbetween"`
+}
+
+func (NBetween[T]) directusFilterRule() {}
 
 type IsNull struct {
 	Value bool `json:"_null"`
@@ -131,6 +155,66 @@ type Contains struct {
 }
 
 func (Contains) directusFilterRule() {}
+
+type IContains struct {
+	Value string `json:"_icontains"`
+}
+
+func (IContains) directusFilterRule() {}
+
+type NContains struct {
+	Value string `json:"_ncontains"`
+}
+
+func (NContains) directusFilterRule() {}
+
+type StartsWith struct {
+	Value string `json:"_starts_with"`
+}
+
+func (StartsWith) directusFilterRule() {}
+
+type IStartsWith struct {
+	Value string `json:"_istarts_with"`
+}
+
+func (IStartsWith) directusFilterRule() {}
+
+type NStartsWith struct {
+	Value string `json:"_nstarts_with"`
+}
+
+func (NStartsWith) directusFilterRule() {}
+
+type EndsWith struct {
+	Value string `json:"_ends_with"`
+}
+
+func (EndsWith) directusFilterRule() {}
+
+type IEndsWith struct {
+	Value string `json:"_iends_with"`
+}
+
+func (IEndsWith) directusFilterRule() {}
+
+type NEndsWith struct {
+	Value string `json:"_nends_with"`
+}
+
+func (NEndsWith) directusFilterRule() {}
+
+type Like struct {
+	Value string `json:"_like"`
+}
+
+func (Like) directusFilterRule() {}
+
+type NLike struct {
+	Value string `json:"_nlike"`
+}
+
+func (NLike) directusFilterRule() {}
 
 type IsEmpty struct {
 	Value bool `json:"_empty"`

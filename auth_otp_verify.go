@@ -5,19 +5,18 @@ import (
 	"encoding/json"
 )
 
-type AuthRefreshParams struct {
-	RefreshToken string   `json:"refresh_token"`
-	Mode         AuthMode `json:"mode,omitempty"`
+type OTPVerifyParams struct {
+	OTP string `json:"otp"`
 }
 
-func (c *Client) AuthRefresh(ctx context.Context, options AuthRefreshParams) (AuthResult, error) {
+func (c *Client) AuthOTPVerify(ctx context.Context, options OTPVerifyParams) (AuthResult, error) {
 	var payload AuthResponsePayload
 
 	resp, err := c.resty.R().
 		SetContext(ctx).
 		SetHeader("Content-Type", "application/json").
 		SetBody(options).
-		Post("/auth/refresh")
+		Post("/auth/otp/verify")
 
 	if err != nil {
 		return payload.Data, err
@@ -28,7 +27,6 @@ func (c *Client) AuthRefresh(ctx context.Context, options AuthRefreshParams) (Au
 		if err := json.Unmarshal(resp.Body(), &failed); err != nil {
 			return payload.Data, err
 		}
-
 		return payload.Data, failed.Errors
 	}
 

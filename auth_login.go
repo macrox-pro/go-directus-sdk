@@ -25,7 +25,7 @@ type AuthResponsePayload struct {
 	Data AuthResult `json:"data"`
 }
 
-type AuthLoginOptions struct {
+type AuthLoginParams struct {
 	Email    string   `json:"email"`
 	Password string   `json:"password"`
 	Mode     AuthMode `json:"mode,omitempty"`
@@ -34,12 +34,12 @@ type AuthLoginOptions struct {
 	Provider string `json:"-"`
 }
 
-func (c *Client) AuthLogin(ctx context.Context, options AuthLoginOptions) (AuthResult, error) {
+func (c *Client) AuthLogin(ctx context.Context, options AuthLoginParams) (AuthResult, error) {
 	var payload AuthResponsePayload
 
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Context-Type", "application/json").
+		SetHeader("Content-Type", "application/json").
 		SetBody(options).
 		Post(
 			helpers.JoinPartsURL(

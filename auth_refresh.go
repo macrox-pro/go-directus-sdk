@@ -15,7 +15,7 @@ func (c *Client) AuthRefresh(ctx context.Context, options AuthRefreshParams) (Au
 
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Content-Type", "application/json").
+		SetHeader(headerContentType, contentTypeJSON).
 		SetBody(options).
 		Post("/auth/refresh")
 

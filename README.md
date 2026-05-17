@@ -42,22 +42,21 @@ type User struct {
 }
 
 func main() {
-    // Create a client
-    client, err := directus.NewClient("https://your-directus-instance.com")
+    // Create a client with static token
+    client, err := directus.NewClient(
+        "https://your-directus-instance.com",
+        directus.WithStaticToken("your-access-token"),
+    )
     if err != nil {
         log.Fatal(err)
     }
     
-    // Set authentication token
-    client = directus.WithStaticToken("your-access-token")
-    
-    // Read items with filtering
+    // Read items (without filtering)
     ctx := context.Background()
-    users, err := client.ReadItems[User]("users").
-        SetFilter(directus.Equals("status", "active")).
+    users, err := directus.NewReadItems[User]("users").
         SetLimit(10).
         SetOffset(0).
-        Do(ctx)
+        SendBy(client)
     if err != nil {
         log.Fatal(err)
     }
@@ -85,14 +84,16 @@ client, err := directus.NewClient(
     directus.WithExtractTokenFromContext(true),
 )
 
-ctx := context.WithValue(context.Background(), 
-    directus.AccessTokenContextKey, "dynamic-token")
+ctx := directus.WithAccessTokenContext(context.Background(), "dynamic-token")
 // Use ctx in requests
 ```
 
 ### Login with Credentials
 ```go
-resp, err := client.AuthLogin("admin@example.com", "password").Do(ctx)
+resp, err := client.AuthLogin(ctx, directus.AuthLoginParams{
+    Email:    "admin@example.com",
+    Password: "password",
+})
 if err != nil {
     log.Fatal(err)
 }
@@ -101,17 +102,31 @@ fmt.Printf("Access token: %s\n", resp.AccessToken)
 
 ### Refresh Token
 ```go
-resp, err := client.AuthRefresh("refresh-token").Do(ctx)
+resp, err := client.AuthRefresh(ctx, directus.AuthRefreshParams{
+    RefreshToken: "refresh-token",
+})
 ```
 
 ### OTP Verification
 ```go
-err := client.AuthOTPVerify("otp-code").Do(ctx)
+resp, err := client.AuthOTPVerify(ctx, directus.OTPVerifyParams{
+    OTP: "otp-code",
+})
+```
+
+### Password Reset Request
+```go
+err := client.AuthResetPasswordRequest(ctx, directus.PasswordResetRequestParams{
+    Email: "user@example.com",
+})
 ```
 
 ### Password Reset
 ```go
-err := client.AuthResetPassword("token", "new-password").Do(ctx)
+err := client.AuthPasswordReset(ctx, directus.PasswordResetParams{
+    Token:    "reset-token",
+    Password: "new-password",
+})
 ```
 
 ### Auth Providers
@@ -130,161 +145,252 @@ for _, provider := range providers {
 ### Create Item
 ```go
 newUser := User{Name: "John Doe", Email: "john@example.com"}
-created, err := client.CreateItem[User]("users").
-    SetData(newUser).
-    Do(ctx)
+created, err := directus.NewCreateItem[User]("users", newUser).
+    SendBy(client)
 ```
 
 ### Read Item
 ```go
-user, err := client.ReadItem[User]("users", "user-123").Do(ctx)
+user, err := directus.NewReadItem[User]("users", "user-123").
+    SendBy(client)
 ```
 
 ### Read Items with Filtering
 ```go
-users, err := client.ReadItems[User]("users").
-    SetFilter(directus.And(
-        directus.Equals("status", "active"),
-        directus.GreaterThan("age", 18),
-    )).
+// Create a filter using ByField and Equal
+filter := directus.ByField{
+    Name: "status",
+    Filter: directus.Equal[string]{Value: "active"},
+}
+users, err := directus.NewReadItems[User]("users").
+    SetFilter(filter).
     SetSort("-created_at").
     SetLimit(100).
     SetOffset(0).
-    SetSearch("john").
-    Do(ctx)
+    SendBy(client)
 ```
 
 ### Update Item
 ```go
-updated, err := client.UpdateItem[User]("users", "user-123").
-    SetData(map[string]any{"name": "John Updated"}).
-    Do(ctx)
+updated, err := directus.NewUpdateItem[User]("users", "user-123").
+    SetChanges(map[string]any{"name": "John Updated"}).
+    SendBy(client)
 ```
 
 ### Update Items (Batch)
 ```go
-err := client.UpdateItems("users").
-    SetFilter(directus.Equals("status", "inactive")).
-    SetData(map[string]any{"archived": true}).
-    Do(ctx)
+err := directus.NewUpdateItems[User]("users").
+    SetFilter(directus.ByField{
+        Name: "status",
+        Filter: directus.Equal[string]{Value: "inactive"},
+    }).
+    SetChanges(map[string]any{"archived": true}).
+    SendBy(client)
 ```
 
 ### Delete Item
 ```go
-err := client.DeleteItem("users", "user-123").Do(ctx)
+err := directus.NewDeleteItem("users", "user-123").
+    SendBy(client)
 ```
 
 ### Delete Items (Batch)
 ```go
-err := client.DeleteItems("users").
-    SetFilter(directus.Equals("status", "deleted")).
-    Do(ctx)
+err := directus.NewDeleteItems[string]("users").
+    SetFilter(directus.ByField{
+        Name: "status",
+        Filter: directus.Equal[string]{Value: "deleted"},
+    }).
+    SendBy(client)
 ```
 
 ## Filtering
 
-The SDK provides type-safe filter rules:
+The SDK provides type-safe filter rules via structs. You can compose filters using the `ByField` wrapper.
 
+### Basic comparisons
 ```go
-// Basic comparisons
-directus.Equals("status", "active")
-directus.NotEquals("status", "inactive")
-directus.GreaterThan("age", 18)
-directus.GreaterThanOrEqual("score", 80)
-directus.LessThan("price", 100)
-directus.LessThanOrEqual("quantity", 10)
+// Equal
+filter := directus.ByField{
+    Name: "status",
+    Filter: directus.Equal[string]{Value: "active"},
+}
 
-// String operations
-directus.Contains("title", "important")
-directus.StartsWith("email", "admin@")
-directus.EndsWith("filename", ".pdf")
+// Not equal
+filter := directus.ByField{
+    Name: "status",
+    Filter: directus.NotEqual[string]{Value: "inactive"},
+}
 
-// Logical operators
-directus.And(
-    directus.Equals("status", "active"),
-    directus.GreaterThan("age", 18),
-)
+// Greater than
+filter := directus.ByField{
+    Name: "age",
+    Filter: directus.GreaterThan[int]{Value: 18},
+}
 
-directus.Or(
-    directus.Equals("role", "admin"),
-    directus.Equals("role", "moderator"),
-)
+// Less than
+filter := directus.ByField{
+    Name: "price",
+    Filter: directus.LessThan[float64]{Value: 100.0},
+}
+```
 
-directus.Not(directus.Equals("status", "deleted"))
+### String operations
+```go
+// Contains
+filter := directus.ByField{
+    Name: "title",
+    Filter: directus.Contains{Value: "important"},
+}
 
-// Null checks
-directus.IsNull("deleted_at")
-directus.IsNotNull("updated_at")
+// Starts with
+filter := directus.ByField{
+    Name: "email",
+    Filter: directus.StartsWith{Value: "admin@"},
+}
 
-// In/NotIn
-directus.In("category", []string{"news", "blog", "tutorial"})
-directus.NotIn("status", []string{"draft", "archived"})
+// Ends with
+filter := directus.ByField{
+    Name: "filename",
+    Filter: directus.EndsWith{Value: ".pdf"},
+}
+```
 
-// Between
-directus.Between("price", 10, 100)
+### Logical operators
+```go
+// AND
+filter := directus.AND{
+    Filters: []directus.FilterRule{
+        directus.ByField{Name: "status", Filter: directus.Equal[string]{Value: "active"}},
+        directus.ByField{Name: "age", Filter: directus.GreaterThan[int]{Value: 18}},
+    },
+}
+
+// OR
+filter := directus.OR{
+    Filters: []directus.FilterRule{
+        directus.ByField{Name: "role", Filter: directus.Equal[string]{Value: "admin"}},
+        directus.ByField{Name: "role", Filter: directus.Equal[string]{Value: "moderator"}},
+    },
+}
+
+// NOT
+filter := directus.NOT{
+    Filter: directus.ByField{Name: "status", Filter: directus.Equal[string]{Value: "deleted"}},
+}
+```
+
+### Null checks
+```go
+filter := directus.ByField{
+    Name: "deleted_at",
+    Filter: directus.IsNull{},
+}
+
+filter := directus.ByField{
+    Name: "updated_at",
+    Filter: directus.IsNotNull{},
+}
+```
+
+### In / NotIn
+```go
+filter := directus.ByField{
+    Name: "category",
+    Filter: directus.In[string]{Values: []string{"news", "blog", "tutorial"}},
+}
+
+filter := directus.ByField{
+    Name: "status",
+    Filter: directus.NotIn[string]{Values: []string{"draft", "archived"}},
+}
+```
+
+### Between
+```go
+filter := directus.ByField{
+    Name: "price",
+    Filter: directus.Between[float64]{Low: 10.0, High: 100.0},
+}
 ```
 
 ## Aggregation
 
+Aggregation is performed using `directus.NewAggregate` and `SetAggregate` with an aggregate rule.
+
+### Count
 ```go
-// Count items
-count, err := client.Aggregate("users").
-    SetFilter(directus.Equals("status", "active")).
-    Count().
-    Do(ctx)
-
-// Sum, Average, Min, Max
-result, err := client.Aggregate("orders").
-    SetFilter(directus.Equals("status", "completed")).
-    Sum("total_amount").
-    Do(ctx)
-
-// Multiple aggregations
-result, err := client.Aggregate("products").
-    Count().
-    Sum("stock").
-    Average("price").
-    Min("price").
-    Max("price").
-    Do(ctx)
+result, err := directus.NewAggregate[any]("users").
+    SetAggregate(directus.Count{}).
+    SetFilter(directus.ByField{
+        Name: "status",
+        Filter: directus.Equal[string]{Value: "active"},
+    }).
+    SendBy(client)
 ```
+
+### Sum
+```go
+result, err := directus.NewAggregate[any]("orders").
+    SetAggregate(directus.Sum{Fields: []string{"total_amount"}}).
+    SetFilter(directus.ByField{
+        Name: "status",
+        Filter: directus.Equal[string]{Value: "completed"},
+    }).
+    SendBy(client)
+```
+
+### Multiple aggregations
+```go
+result, err := directus.NewAggregate[any]("products").
+    SetAggregate(directus.Many{
+        Rules: []directus.AggregateRule{
+            directus.Count{},
+            directus.Sum{Fields: []string{"stock"}},
+            directus.Avg{Fields: []string{"price"}},
+            directus.Min{Fields: []string{"price"}},
+            directus.Max{Fields: []string{"price"}},
+        },
+    }).
+    SendBy(client)
+```
+
+Note: Use `directus.Many` to combine multiple aggregate rules in a single request.
 
 ## Server Information
 
+### Ping
 ```go
-// Ping
-err := client.ServerPing().Do(ctx)
+ping, err := client.ServerPing(ctx)
+```
 
-// Health
-health, err := client.ServerHealth().Do(ctx)
+### Health
+```go
+health, err := client.ServerHealth(ctx)
+```
 
-// Info
-info, err := client.ServerInfo().Do(ctx)
+### Info
+```go
+info, err := client.ServerInfo(ctx)
 ```
 
 ## Singleton Operations
 
+### Read Singleton
 ```go
-type Settings struct {
-    SiteName string `json:"site_name"`
-    Theme    string `json:"theme"`
-}
-
-// Read singleton
-settings, err := client.ReadSingleton[Settings]("settings").Do(ctx)
-
-// Update singleton
-updated, err := client.UpdateSingleton[Settings]("settings").
-    SetData(map[string]any{"theme": "dark"}).
-    Do(ctx)
+settings, err := directus.NewReadSingleton[Settings]("settings").
+    SendBy(client)
 ```
+
+### Update Singleton
+Update of singletons is currently not implemented as a separate method. Use `UpdateItem` with the singleton collection name.
 
 ## Error Handling
 
 The SDK returns structured errors:
 
 ```go
-items, err := client.ReadItems[User]("users").Do(ctx)
+items, err := directus.NewReadItems[User]("users").SendBy(client)
 if err != nil {
     if errs, ok := err.(directus.Errors); ok {
         for _, e := range errs {
@@ -300,29 +406,25 @@ if err != nil {
 
 ### Deep Query
 ```go
-users, err := client.ReadItems[User]("users").
+users, err := directus.NewReadItems[User]("users").
     SetDeep(map[string]directus.DeepQuery{
         "posts": {
-            Filter: directus.Equals("status", "published"),
-            Limit:  5,
+            Filter: directus.ByField{
+                Name: "status",
+                Filter: directus.Equal[string]{Value: "published"},
+            },
+            Limit: 5,
         },
     }).
-    Do(ctx)
-```
-
-### Fields Selection
-```go
-users, err := client.ReadItems[User]("users").
-    SetFields([]string{"id", "name", "email"}).
-    Do(ctx)
+    SendBy(client)
 ```
 
 ### System Collections
 ```go
 // Access Directus system collections
-roles, err := client.ReadItems[Role]("directus_roles").
-    SetSystem(true).
-    Do(ctx)
+roles, err := directus.NewReadItems[Role]("directus_roles").
+    SetIsSystem(true).
+    SendBy(client)
 ```
 
 ## Configuration
@@ -331,13 +433,13 @@ roles, err := client.ReadItems[Role]("directus_roles").
 ```go
 client, err := directus.NewClient(
     "https://api.example.com",
-    directus.WithStaticToken("token"),
+    directus.WithStaticToken("your-access-token"),
     directus.WithExtractTokenFromContext(true),
 )
 ```
 
 ### Custom HTTP Client
-The SDK uses `github.com/go-resty/resty/v2` internally. You can customize the underlying HTTP client:
+The SDK uses `github.com/go-resty/resty/v2` internally. You can customize the underlying HTTP client by accessing the resty client directly:
 
 ```go
 // Create client first
@@ -347,34 +449,14 @@ if err != nil {
 }
 
 // Access the underlying resty client
-restyClient := client.RestyClient()
-restyClient.SetTimeout(30 * time.Second)
-restyClient.SetRetryCount(3)
-```
-
-## Project Structure
-
-```
-.
-├── client.go              # Core client and constructor
-├── client_options.go      # Client configuration options
-├── auth_*.go             # Authentication methods
-├── *_item.go             # CRUD operations
-├── aggregate*.go         # Aggregation functionality
-├── filter_rules.go       # Filter rule types
-├── errors.go             # Error definitions
-├── utils.go              # Internal utilities
-├── helpers/              # Internal helper packages
-│   ├── fields_extractor.go
-│   ├── join_parts_url.go
-│   └── url_param_json.go
-└── README.md             # This file
+restyClient := client.resty // Note: field is not exported, you need to use reflection or provide a getter.
+// Currently there is no public method to access the resty client.
 ```
 
 ## Requirements
 
 - Go 1.25.0 or higher
-- Directus API v9+
+- Directus API v11+
 
 ## Dependencies
 

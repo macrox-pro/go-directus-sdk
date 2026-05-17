@@ -14,7 +14,7 @@ func (c *Client) AuthOTPVerify(ctx context.Context, options OTPVerifyParams) (Au
 
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Content-Type", "application/json").
+		SetHeader(headerContentType, contentTypeJSON).
 		SetBody(options).
 		Post("/auth/otp/verify")
 

@@ -9,13 +9,12 @@ import (
 )
 
 const (
-	AuthScheme            = "Bearer"
-	AccessTokenContextKey = "DirectusAccessToken"
-
 	headerAccept      = "Accept"
 	headerContentType = "Content-Type"
 
 	contentTypeJSON = "application/json"
+
+	defaultAuthScheme = "Bearer"
 )
 
 type Client struct {
@@ -35,10 +34,8 @@ func (c *Client) createRequestWithContext(ctx context.Context) *resty.Request {
 		return restyReq
 	}
 
-	if i := ctx.Value(AccessTokenContextKey); i != nil {
-		if token, ok := i.(string); ok && token != "" {
-			restyReq.SetAuthToken(token)
-		}
+	if token := AccessTokenFromContext(ctx); token != "" {
+		restyReq.SetAuthToken(token)
 	}
 
 	return restyReq
@@ -53,7 +50,7 @@ func NewClient(baseURL string, options ...ClientOption) (*Client, error) {
 
 	restyClient := resty.New()
 	restyClient.BaseURL = strings.TrimRight(baseURL, "/")
-	restyClient.AuthScheme = AuthScheme
+	restyClient.AuthScheme = defaultAuthScheme
 
 	client := &Client{resty: restyClient}
 	for _, fn := range options {

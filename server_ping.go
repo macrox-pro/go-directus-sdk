@@ -8,7 +8,7 @@ import (
 func (c *Client) ServerPing(ctx context.Context) (string, error) {
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Accept", "application/json").
+		SetHeader(headerAccept, contentTypeJSON).
 		Get("/server/ping")
 
 	if err != nil {

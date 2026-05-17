@@ -13,7 +13,7 @@ type AuthLogoutParams struct {
 func (c *Client) AuthLogout(ctx context.Context, options AuthLogoutParams) error {
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Content-Type", "application/json").
+		SetHeader(headerContentType, contentTypeJSON).
 		SetBody(options).
 		Post("/auth/logout")
 

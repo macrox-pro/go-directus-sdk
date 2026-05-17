@@ -22,7 +22,7 @@ func (c *Client) AuthProviders(ctx context.Context) ([]AuthProvider, error) {
 
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Accept", "application/json").
+		SetHeader(headerAccept, contentTypeJSON).
 		Get("/auth/providers")
 
 	if err != nil {

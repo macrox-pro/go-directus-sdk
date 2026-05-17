@@ -8,7 +8,7 @@ import (
 func (c *Client) ServerHealth(ctx context.Context) (string, error) {
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Accept", "application/json").
+		SetHeader(headerAccept, contentTypeJSON).
 		Get("/server/health")
 
 	if err != nil {

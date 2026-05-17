@@ -18,7 +18,7 @@ type PasswordResetParams struct {
 func (c *Client) AuthResetPasswordRequest(ctx context.Context, options PasswordResetRequestParams) error {
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Content-Type", "application/json").
+		SetHeader(headerContentType, contentTypeJSON).
 		SetBody(options).
 		Post("/auth/password/request")
 
@@ -41,7 +41,7 @@ func (c *Client) AuthResetPasswordRequest(ctx context.Context, options PasswordR
 func (c *Client) AuthPasswordReset(ctx context.Context, options PasswordResetParams) error {
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Content-Type", "application/json").
+		SetHeader(headerContentType, contentTypeJSON).
 		SetBody(options).
 		Post("/auth/password/reset")
 

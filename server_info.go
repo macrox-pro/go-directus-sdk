@@ -31,7 +31,7 @@ func (c *Client) ServerInfo(ctx context.Context) (ServerInfo, error) {
 
 	resp, err := c.resty.R().
 		SetContext(ctx).
-		SetHeader("Accept", "application/json").
+		SetHeader(headerAccept, contentTypeJSON).
 		Get("/server/info")
 
 	if err != nil {
